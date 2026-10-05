@@ -7,6 +7,7 @@ import UserRouter from "./routes/User.routes.js";
 import ProjectRouter from "./routes/Project.routes.js";
 import UploadRouter from "./routes/Upload.routes.js";
 import path from "path";
+import ArchetypeRouter from "./routes/Achetypes.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(
 app.use("/api/users", UserRouter);
 app.use("/api/projects",ProjectRouter);
 app.use("/api/uploads",UploadRouter);
+app.use("/api/archetypes",ArchetypeRouter);
 
 
 app.get("/", (req, res) => {

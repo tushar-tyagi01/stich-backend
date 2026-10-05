@@ -6,14 +6,33 @@ import { compileSitePrompts } from "../services/PromptCompilerService.js";
 import { generateSiteWithStitch } from "../stich.js";
 import GeneratedScreen from "../db/model/GeneratedScreen.js";
 
-
 export const createProject = async (req, res) => {
   try {
     const { userId } = req.body;
 
     if (!userId) {
-      return res.status(400).json({ success: false, message: "userId is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "userId is required" });
     }
+
+    const incompleteProjects = await Project.find({
+      user: userId,
+      status: { $ne: "completed" },
+    });
+
+    const incompleteProjectIds = incompleteProjects.map(
+      (project) => project._id,
+    );
+
+    await UserInput.deleteMany({
+      project: { $in: incompleteProjectIds },
+    });
+
+    await Project.deleteMany({
+      user: userId,
+      status: { $ne: "completed" },
+    });
 
     const project = await Project.create({ user: userId }); // status defaults to "started"
 
@@ -24,10 +43,11 @@ export const createProject = async (req, res) => {
     });
   } catch (error) {
     console.error("Create Project error:", error);
-    return res.status(500).json({ success: false, message: "Something went wrong" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Something went wrong" });
   }
 };
-
 
 export async function runBriefGeneration(projectId) {
   const project = await Project.findById(projectId);
@@ -48,32 +68,22 @@ export async function runBriefGeneration(projectId) {
   await project.save();
 
   try {
-    const briefDoc = await generateDesignBrief(
-      userInput,
-      projectId
-    );
+    const briefDoc = await generateDesignBrief(userInput, projectId);
 
-    console.log("briefdoc:",briefDoc);
+    console.log("briefdoc:", briefDoc);
 
     await briefDoc.save();
 
     // STEP 6
-    const tokensDoc = await generateDesignTokens(
-      briefDoc
-    );
+    const tokensDoc = await generateDesignTokens(briefDoc);
 
-    console.log("Tokens:",tokensDoc);
+    console.log("Tokens:", tokensDoc);
 
-    
-    const compiledPrompts = await compileSitePrompts(
-      briefDoc,
-      tokensDoc,
-      {
-        businessName: userInput.businessName,
-      }
-    );
+    const compiledPrompts = await compileSitePrompts(briefDoc, tokensDoc, {
+      businessName: userInput.businessName,
+    });
 
-    console.log("compile prompt:",compiledPrompts);
+    console.log("compile prompt:", compiledPrompts);
 
     project.status = "brief_ready";
     project.errorMessage = undefined;
@@ -85,7 +95,6 @@ export async function runBriefGeneration(projectId) {
       tokens: tokensDoc,
       compiledPrompts,
     };
-
   } catch (err) {
     project.status = "brief_failed";
     project.errorMessage = err.message;
@@ -96,14 +105,15 @@ export async function runBriefGeneration(projectId) {
   }
 }
 
-
 export const submitUserInput = async (req, res) => {
   try {
     const { projectId } = req.params;
 
     const project = await Project.findById(projectId);
     if (!project) {
-      return res.status(404).json({ success: false, message: "Project not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
     }
 
     const userInput = await UserInput.create({
@@ -114,20 +124,24 @@ export const submitUserInput = async (req, res) => {
     project.status = "input_submitted";
     await project.save();
 
-    
     runBriefGeneration(projectId).catch((err) => {
-      console.error(`Background brief generation failed for project ${projectId}:`, err.message);
+      console.error(
+        `Background brief generation failed for project ${projectId}:`,
+        err.message,
+      );
     });
 
     return res.status(201).json({
       success: true,
       projectId: project._id,
-      status: project.status, // "input_submitted" — brief generation is still running
+      status: project.status, // "input_submitted" —> brief generation is still running
       userInputId: userInput._id,
     });
   } catch (error) {
     console.error("Submit UserInput error:", error);
-    return res.status(500).json({ success: false, message: "Something went wrong" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Something went wrong" });
   }
 };
 
@@ -154,7 +168,7 @@ export const generateSite = async (req, res) => {
     generateSiteWithStitch(projectId).catch((err) => {
       console.error(
         `Background Stitch generation failed for project ${projectId}:`,
-        err.message
+        err.message,
       );
     });
 
@@ -164,7 +178,6 @@ export const generateSite = async (req, res) => {
       status: "generating",
       message: "Website generation started",
     });
-
   } catch (error) {
     console.error("Generate Site error:", error);
 
@@ -215,12 +228,13 @@ export const getProjectResults = async (req, res) => {
   }
 };
 
-
 export const getProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId);
     if (!project) {
-      return res.status(404).json({ success: false, message: "Project not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Project not found" });
     }
 
     return res.status(200).json({
@@ -231,10 +245,11 @@ export const getProject = async (req, res) => {
     });
   } catch (error) {
     console.error("Get Project error:", error);
-    return res.status(500).json({ success: false, message: "Something went wrong" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Something went wrong" });
   }
 };
-
 
 export const generateBrief = async (req, res) => {
   try {

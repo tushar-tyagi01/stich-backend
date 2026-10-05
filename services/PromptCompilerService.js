@@ -72,13 +72,17 @@ const navItems = sections
   .slice(0, 8)
   .join(" · ");
 
-  const logoSpec = brief.contentReadiness?.hasLogo
-    ? `reserved logo slot (client logo supplied)`
-    : `text wordmark "${businessName}" in the heading font, primary-600`;
+  const logoSpec = brief.logoUrl
+  ? `Use the client's actual logo image from this URL: ${brief.logoUrl}`
+  : `No client logo was supplied. Create a simple, brand-appropriate logo/wordmark for "${businessName}" that matches the site's visual direction.`;
 
-  const imageryRule = brief.contentReadiness?.hasRealPhotos
-    ? `- The client HAS real photography. Reserve clearly-labeled photo slots sized to consistent aspect ratios (e.g. "[Photo: groomer trimming a terrier]"). Never fake imagery.`
-    : `- The client has NO real photos yet. Prefer icon-forward and illustration-friendly treatments; where photos would appear, use neutral placeholder blocks labeled with intended content.`;
+const imageryRule = brief.contentReadiness?.hasRealPhotos
+  ? `- The client HAS real photography. Use the supplied client photos where appropriate. Never fake or invent client-specific imagery.`
+  : `- The client has NO real photos yet. Use suitable generic/generated visual imagery that matches the business, industry, and section.
+- Prefer relevant, visually appealing imagery over empty placeholder blocks.
+- For food businesses, use appetizing food-related visuals such as pani puri, chaat, ingredients, or street-food scenes.
+- Do not present generic imagery as photos of the actual business.
+- Keep imagery consistent with the site's visual direction and design tokens.`;
 
   const constraintLines = (brief.constraints ?? [])
     .map((c) => `- ${c}`)
@@ -126,12 +130,18 @@ SHADOWS: sm ${t.shadow.sm} · md ${t.shadow.md} · lg ${t.shadow.lg}
 
 SHARED COMPONENTS — must be identical on every page of this site.
 HEADER: sticky top bar, surface page, 1px bottom border default, 64-72px tall.
-Left: ${logoSpec}.Right: section navigation (${navItems}) in body font, neutral-700,
+
+Left: ${logoSpec}. Right: section navigation (${navItems}) in body font, neutral-700,
 with each navigation item scrolling to its corresponding section on
-the same page; then "${brief.primaryCTA}" as a filled primary-600
-button with white text, radius.md.
+the same page.
+
+The primary CTA "${brief.primaryCTA}" may be displayed as a
+button-style visual element, but it must NOT submit a form or trigger
+any backend functionality. It may link to a real external destination
+only when that destination was explicitly supplied by the user.
+Never invent a destination.
 FOOTER: surface neutral-900, 4 columns — (1) business name + one-line blurb,
-(2) nav links, (3) contact placeholder (phone/email/address as real text),
+(2) nav links, (3) supplied contact information (phone/email/address as real text; never invent missing values),
 (4) hours if relevant; bottom bar with copyright, text neutral-400.
 
 IMAGERY DIRECTION: ${brief.imageryDirection}
@@ -141,9 +151,71 @@ GLOBAL RULES
 - Every color on the page must trace to a token above. No new hues.
 - Primary buttons: filled primary-600, white text, radius.md, hover primary-700. One primary button per view.
 - Links: primary-600, underline on hover. Body text neutral-700 on the page surface; headings neutral-900.
-- Section vertical padding: spacing.8 desktop, spacing.6 mobile. Content column max-width 1120px.
-- Desktop-first layout, but specify sensible mobile stacking for every section.
- ${constraintLines ? `\nHARD CONSTRAINTS (must be respected)\n${constraintLines}\n` : ""}`;
+- Section vertical padding: spacing.8 desktop, spacing.6 mobile.
+- Main content container: width: 100%; max-width: 1120px; centered with responsive horizontal padding.
+- Never constrain the main page content to a fixed 420px width.
+
+RESPONSIVE DESIGN REQUIREMENTS
+
+- Design for three viewport ranges:
+  1. Desktop: 1024px and above
+  2. Tablet: 768px–1023px
+  3. Mobile: below 768px
+
+- DESKTOP:
+  - Use the full available content width within the 1120px maximum container.
+  - Use multi-column layouts where appropriate.
+  - Use 2-4 columns for cards when content supports it.
+  - Use two-column hero layouts when appropriate.
+  - Use split layouts for About and Contact sections when appropriate.
+  - Use multi-column footer layout.
+
+- TABLET:
+  - Reduce column counts when necessary.
+  - Reduce horizontal spacing while preserving visual hierarchy.
+  - Keep content readable and balanced.
+
+- MOBILE:
+  - Stack major content sections vertically.
+  - Stack desktop two-column layouts into one column.
+  - Convert card grids into a single column when necessary.
+  - Make images full width within their containers.
+  - Reduce heading sizes and spacing appropriately.
+  - Ensure buttons fit the viewport.
+  - Navigation must be mobile-friendly.
+  - Prevent horizontal overflow.
+  - Ensure all text wraps naturally.
+
+- IMPORTANT:
+  - Do NOT design the entire page as a fixed narrow mobile-width layout.
+  - Do NOT use a fixed max-width such as 420px for the main desktop content.
+  - Desktop must actually use the available viewport width.
+  - Responsive behavior must change the layout between desktop, tablet, and mobile.
+ ${constraintLines ? `\nHARD CONSTRAINTS (must be respected)\n${constraintLines}\n` : ""}
+
+ - This is a STATIC visual website only.
+- Do NOT create functional forms or form submission.
+- Do NOT create booking or appointment functionality.
+- Do NOT create reservation functionality.
+- Do NOT create checkout or payment functionality.
+- Do NOT create login, signup, authentication, or user accounts.
+- Do NOT create live chat or messaging functionality.
+- Do NOT create backend-powered search or filtering.
+- Do NOT create newsletter signup functionality.
+- Do NOT create dashboards or admin functionality.
+- Do NOT create database-driven functionality.
+- Do NOT imply that any UI element saves, submits, processes,
+  reserves, purchases, registers, or stores data.
+- Forms, booking controls, search fields, calendars, checkout UI,
+  and similar controls must not be presented as functional.
+- Only real external destinations supplied by the user may be used
+  for links or CTA actions.
+- Never invent URLs, phone numbers, email addresses, booking links,
+  social links, or other destinations.
+ 
+ `;
+
+ 
 }
 
 // ---------- per-page assembly ----------
@@ -270,6 +342,17 @@ OUTPUT REQUIREMENTS
 - Use semantic section IDs for navigation.
 - Do not invent colors, fonts, spacing, or other visual values outside the provided design tokens.
 - Label placeholder images with bracketed descriptions.
+
+- The website must remain completely static and visual.
+- Do NOT generate functional forms or form submission.
+- Do NOT generate booking, appointment, reservation, checkout,
+  payment, login, signup, authentication, live chat, search,
+  filtering, newsletter signup, dashboard, or database-backed
+  functionality.
+- CTA elements may be visually styled as buttons, but they must not
+  imply backend functionality.
+- Use only real external destinations explicitly supplied by the user.
+- Never invent contact information or external URLs.
 `;
 
   const compiled = {

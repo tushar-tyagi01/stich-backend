@@ -262,34 +262,48 @@ DESIGN RULES:
 `,
   },
 
-  contact: {
-    name: "Contact Section",
+ contact: {
+  name: "Contact / Visit Us Section",
 
-    match: {
-      exact: ["contact", "contact us", "location", "visit us"],
-      keywords: ["contact", "location", "address", "phone", "email", "visit", "map"],
-    },
+  match: {
+    exact: ["contact", "contact us", "location", "visit us"],
+    keywords: ["contact", "location", "address", "phone", "email", "visit", "map"],
+  },
 
-    promptTemplate: `
-Design the Contact section for {{businessName}}.
+  promptTemplate: `
+
+Design the Contact / Visit Us section for {{businessName}}.
 
 PURPOSE:
+
 {{sectionPurpose}}
 
 LAYOUT:
-- Use a two-column layout on desktop.
-- LEFT: short contact form.
-- RIGHT: contact details including phone, email, address, and hours when available.
-- Include a map when a physical location exists.
+
+- Use a balanced two-column layout on desktop.
+- LEFT: create a rich location and visit-information panel.
+- RIGHT: display contact details and a visual map/location area when a physical location exists.
+- Use the available address, phone, email, hours, and directions when supplied.
 - Include a clear section heading.
+- Use visual elements such as a location icon, directions block, opening-hours card, or map placeholder to make the section visually complete.
+- Do not leave large empty areas.
+- Stack the columns naturally on mobile.
 
 DESIGN RULES:
+
 - Contact information must be real selectable text.
-- Do not hide important contact details behind the form.
-- Keep the form concise.
-- Stack columns naturally on mobile.
+- Never invent missing contact information.
+- Never create a contact form.
+- Never create input fields or submit buttons.
+- Never create booking or appointment controls.
+- If a physical address is available, make the location information visually prominent.
+- If a map is shown but no real map embed/destination was supplied, use a clearly labeled static map placeholder.
+- Use supplied hours and directions when available.
+- Keep the section visually balanced and information-dense without overcrowding.
+- Maintain the site's design tokens and visual language.
+
 `,
-  },
+},
 
   gallery: {
     name: "Gallery Section",

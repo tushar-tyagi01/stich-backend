@@ -21,7 +21,6 @@ const projectSchema = new mongoose.Schema(
       default: "started",
     },
 
-    // A real User model now exists (register by name+email, no password).
     // Every Project belongs to exactly one User; a User can have many Projects.
     user: {
       type: mongoose.Schema.Types.ObjectId,

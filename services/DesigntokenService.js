@@ -11,13 +11,30 @@ import { hexToHsl, hslToHex } from "../utils/color.js";
 const SHADE_LIGHTNESS = { 50: 97, 100: 93, 200: 85, 300: 74, 400: 61, 500: 50, 600: 42, 700: 34, 800: 26, 900: 18 };
 
 const FONT_PAIRINGS = {
-  // ⚠️ Align these keys with your STYLE_OPTIONS enum values.
-  // This is a curated lookup table (step-7-style curation), not AI.
-  modern:    { heading: "Poppins",          body: "Inter" },
-  minimal:   { heading: "Inter",            body: "Inter" },
-  playful:   { heading: "Quicksand",        body: "Nunito" },
-  editorial: { heading: "Playfair Display", body: "Source Sans 3" },
-  corporate: { heading: "IBM Plex Sans",    body: "IBM Plex Sans" },
+  "modern-minimal": {
+    heading: "Poppins",
+    body: "Inter",
+  },
+
+  "warm-friendly": {
+    heading: "Nunito",
+    body: "Inter",
+  },
+
+  "bold-playful": {
+    heading: "Quicksand",
+    body: "Nunito",
+  },
+
+  "elegant-luxury": {
+    heading: "Playfair Display",
+    body: "Source Sans 3",
+  },
+
+  "corporate-professional": {
+    heading: "IBM Plex Sans",
+    body: "IBM Plex Sans",
+  },
 };
 const DEFAULT_FONTS = { heading: "Inter", body: "Inter" };
 
@@ -35,10 +52,6 @@ const SHADOWS_SUBTLE = { sm: "0 1px 2px rgba(0,0,0,0.05)",  md: "0 2px 6px rgba(
 
 const SPACING = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48, 8: 64, 9: 96, 10: 128 };
 
-// ---------------------------------------------------------------
-// Builders
-// ---------------------------------------------------------------
-
 function buildScale(hex) {
   const { h, s } = hexToHsl(hex);
   return Object.fromEntries(
@@ -49,11 +62,10 @@ function buildScale(hex) {
 function buildNeutralScale(primaryHex) {
   const { h } = hexToHsl(primaryHex);
   const L = { 50: 98, 100: 95, 200: 89, 300: 79, 400: 64, 500: 51, 600: 41, 700: 31, 800: 21, 900: 12 };
-  // Neutrals carry a whisper of the brand hue (s=8) — grays feel cohesive, not dead
   return Object.fromEntries(Object.entries(L).map(([k, l]) => [k, hslToHex(h, 8, l)]));
 }
 
-// If no accent hint: complementary hue, saturation/lightness clamped to pleasant ranges
+
 function deriveAccent(primaryHex) {
   const { h, s } = hexToHsl(primaryHex);
   return hslToHex((h + 180) % 360, Math.min(85, Math.max(55, s)), 48);
@@ -69,7 +81,15 @@ function firstToneMatch(tones, rules) {
 
 function buildTypeScale(style) {
   // ⚠️ Align keys with STYLE_OPTIONS — tighter scale for restrained styles
-  const RATIO_BY_STYLE = { minimal: 1.2, corporate: 1.25, editorial: 1.333, playful: 1.333 };
+  
+  
+  const RATIO_BY_STYLE = {
+  "modern-minimal": 1.2,
+  "warm-friendly": 1.25,
+  "bold-playful": 1.333,
+  "elegant-luxury": 1.333,
+  "corporate-professional": 1.25,
+};
   const ratio = RATIO_BY_STYLE[style] ?? 1.25;
   const base = 16;
   const r = (v) => Math.round(v * 2) / 2; // nearest 0.5px
@@ -132,9 +152,7 @@ export function buildDesignTokens(brief) {
   };
 }
 
-// ---------------------------------------------------------------
-// Persisted, versioned wrapper
-// ---------------------------------------------------------------
+
 
 export async function generateDesignTokens(briefDoc) {
   const tokens = buildDesignTokens(briefDoc);

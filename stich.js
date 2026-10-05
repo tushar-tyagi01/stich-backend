@@ -7,9 +7,7 @@ import { stitch } from "@google/stitch-sdk";
 import GeneratedScreen from "./db/model/GeneratedScreen.js";
 import Project from "./db/model/Project.js";
 
-import {
-  getLatestCompiledPrompts,
-} from "./services/PromptCompilerService.js";
+import { getLatestCompiledPrompts } from "./services/PromptCompilerService.js";
 
 export async function generateSiteWithStitch(projectId) {
   console.log("Starting Stitch generation...");
@@ -23,9 +21,7 @@ export async function generateSiteWithStitch(projectId) {
   const compiledPrompts = await getLatestCompiledPrompts(projectId);
 
   if (!compiledPrompts.length) {
-    throw new Error(
-      `No compiled prompts found for project ${projectId}`
-    );
+    throw new Error(`No compiled prompts found for project ${projectId}`);
   }
 
   project.status = "generating";
@@ -35,31 +31,33 @@ export async function generateSiteWithStitch(projectId) {
 
   try {
     // Create one Stitch project
-    const stitchProject = await stitch.createProject(
-      `Website ${projectId}`
-    );
+    const stitchProject = await stitch.createProject(`Website ${projectId}`);
 
     // For SPA architecture there should be only one compiled prompt
     const compiled = compiledPrompts[0];
 
     if (!compiled) {
-      throw new Error(
-        `No compiled prompt found for project ${projectId}`
-      );
+      throw new Error(`No compiled prompt found for project ${projectId}`);
     }
 
     console.log("Generating single-page website...");
 
     // Generate ONE screen
-    const screen = await stitchProject.generate(
-      compiled.prompt
-    );
+    const screen = await stitchProject.generate(compiled.prompt);
+
+    console.log("===== STITCH SCREEN =====");
+    console.log(screen);
+    console.log("SCREEN ID:", screen.id);
 
     // Get generated website URLs
     const htmlUrl = await screen.getHtml();
+
+    console.log("===== HTML =====");
+    console.log("HTML URL:", htmlUrl);
     const stitchImageUrl = await screen.getImage();
 
-    console.log("STITCH IMAGE URL:", stitchImageUrl);
+    console.log("===== IMAGE =====");
+    console.log("IMAGE URL:", stitchImageUrl);
 
     // --------------------------------------------------
     // Download Stitch image to our backend
@@ -69,17 +67,14 @@ export async function generateSiteWithStitch(projectId) {
 
     if (!imageResponse.ok) {
       throw new Error(
-        `Failed to download Stitch image: ${imageResponse.status} ${imageResponse.statusText}`
+        `Failed to download Stitch image: ${imageResponse.status} ${imageResponse.statusText}`,
       );
     }
 
     const contentType =
       imageResponse.headers.get("content-type") || "image/png";
 
-    console.log(
-      "STITCH IMAGE CONTENT TYPE:",
-      contentType
-    );
+    console.log("STITCH IMAGE CONTENT TYPE:", contentType);
 
     // Determine file extension
     let extension = "png";
@@ -93,11 +88,7 @@ export async function generateSiteWithStitch(projectId) {
     }
 
     // Create generated images directory
-    const generatedDir = path.join(
-      process.cwd(),
-      "uploads",
-      "generated"
-    );
+    const generatedDir = path.join(process.cwd(), "uploads", "generated");
 
     fs.mkdirSync(generatedDir, {
       recursive: true,
@@ -106,38 +97,23 @@ export async function generateSiteWithStitch(projectId) {
     // Unique filename
     const fileName = `design-${projectId}-${Date.now()}.${extension}`;
 
-    const filePath = path.join(
-      generatedDir,
-      fileName
-    );
+    const filePath = path.join(generatedDir, fileName);
 
     // Convert response to Buffer
-    const imageBuffer = Buffer.from(
-      await imageResponse.arrayBuffer()
-    );
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
     // Save image
-    fs.writeFileSync(
-      filePath,
-      imageBuffer
-    );
+    fs.writeFileSync(filePath, imageBuffer);
 
-    console.log(
-      "Generated image saved:",
-      filePath
-    );
+    console.log("Generated image saved:", filePath);
 
     // --------------------------------------------------
     // Our own image URL
     // --------------------------------------------------
 
-    const imageUrl =
-      `${process.env.BACKEND_URL}/uploads/generated/${fileName}`;
+    const imageUrl = `${process.env.BACKEND_URL}/uploads/generated/${fileName}`;
 
-    console.log(
-      "OUR IMAGE URL:",
-      imageUrl
-    );
+    console.log("OUR IMAGE URL:", imageUrl);
 
     // --------------------------------------------------
     // Save generated website
@@ -158,9 +134,7 @@ export async function generateSiteWithStitch(projectId) {
 
     await project.save();
 
-    console.log(
-      `Stitch generation completed for project ${projectId}`
-    );
+    console.log(`Stitch generation completed for project ${projectId}`);
 
     return {
       stitchProjectId: stitchProject.id,
@@ -169,7 +143,6 @@ export async function generateSiteWithStitch(projectId) {
         imageUrl,
       },
     };
-
   } catch (err) {
     project.status = "failed";
     project.errorMessage = err.message;
@@ -178,7 +151,7 @@ export async function generateSiteWithStitch(projectId) {
 
     console.error(
       `Stitch generation failed for project ${projectId}:`,
-      err.message
+      err.message,
     );
 
     throw err;
