@@ -3,8 +3,12 @@ import UserInput from "../db/model/UserInput.js";
 import { generateDesignBrief } from "../services/BriefService.js";
 import { generateDesignTokens } from "../services/DesigntokenService.js";
 import { compileSitePrompts } from "../services/PromptCompilerService.js";
-import { generateSiteWithStitch } from "../stich.js";
+import {
+  generateSiteWithStitch,
+  refineSiteWithStitch,
+} from "../stich.js";
 import GeneratedScreen from "../db/model/GeneratedScreen.js";
+import { generateEditInstruction } from "../services/FeedbackService.js";
 
 export const createProject = async (req, res) => {
   try {
@@ -258,5 +262,161 @@ export const generateBrief = async (req, res) => {
   } catch (error) {
     console.error("Generate Brief (retry) error:", error);
     return res.status(422).json({ success: false, message: error.message });
+  }
+};
+
+export const submitFeedback = async (req, res) => {
+  const { projectId } = req.params;
+  const startedAt = Date.now();
+  let stage = "validation";
+
+  try {
+    const { message } = req.body;
+    const trimmedMessage = typeof message === "string" ? message.trim() : "";
+
+    console.info("[submitFeedback] Request received", {
+      projectId,
+      feedbackLength: trimmedMessage.length,
+    });
+
+    if (!trimmedMessage || trimmedMessage.length > 1000) {
+      console.warn("[submitFeedback] Invalid feedback", {
+        projectId,
+        feedbackLength: trimmedMessage.length,
+      });
+      return res.status(400).json({
+        success: false,
+        message: trimmedMessage
+          ? "Feedback message must be 1000 characters or fewer"
+          : "Feedback message is required",
+      });
+    }
+
+    stage = "project_lookup";
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      console.warn("[submitFeedback] Project not found", { projectId });
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    stage = "latest_screen_lookup";
+    const currentScreen = await GeneratedScreen.findOne({
+      project: projectId,
+    })
+      .sort({ createdAt: -1 })
+      .populate("compiledPrompt");
+
+    if (!currentScreen) {
+      console.warn("[submitFeedback] No generated screen found", {
+        projectId,
+      });
+      return res.status(404).json({
+        success: false,
+        message: "No generated design found for this project",
+      });
+    }
+
+    if (!currentScreen.compiledPrompt) {
+      console.error("[submitFeedback] Compiled prompt missing", {
+        projectId,
+        generatedScreenId: currentScreen._id.toString(),
+        compiledPromptId: currentScreen.compiledPrompt,
+      });
+      return res.status(409).json({
+        success: false,
+        message: "The generated design has no compiled prompt to refine",
+      });
+    }
+
+    console.info("[submitFeedback] Current screen loaded", {
+      projectId,
+      generatedScreenId: currentScreen._id.toString(),
+      stitchProjectId: currentScreen.stitchProjectId,
+      screenId: currentScreen.screenId,
+      compiledPromptId: currentScreen.compiledPrompt._id.toString(),
+    });
+
+    stage = "instruction_generation";
+    const editInstruction = await generateEditInstruction({
+      feedback: trimmedMessage,
+      currentPrompt: currentScreen.compiledPrompt.prompt,
+    });
+
+    console.info("[submitFeedback] Edit instruction generated", {
+      projectId,
+      instruction: editInstruction,
+    });
+
+    stage = "stitch_refinement";
+    const refined = await refineSiteWithStitch({
+      stitchProjectId: currentScreen.stitchProjectId,
+      screenId: currentScreen.screenId,
+      instruction: editInstruction,
+    });
+
+    console.info("[submitFeedback] Stitch refinement completed", {
+      projectId,
+      stitchProjectId: refined.stitchProjectId,
+      screenId: refined.screenId,
+      hasHtmlUrl: Boolean(refined.htmlUrl),
+      hasImageUrl: Boolean(refined.imageUrl),
+    });
+
+    stage = "screen_persistence";
+    const refinedScreen = await GeneratedScreen.create({
+      project: projectId,
+      compiledPrompt: currentScreen.compiledPrompt._id,
+      stitchProjectId: refined.stitchProjectId,
+      screenId: refined.screenId,
+      htmlUrl: refined.htmlUrl,
+      imageUrl: refined.imageUrl,
+    });
+
+    stage = "project_update";
+    project.feedback = trimmedMessage;
+    project.approved = false;
+    project.approvedAt = undefined;
+    await project.save();
+
+    console.info("[submitFeedback] Feedback refinement succeeded", {
+      projectId,
+      generatedScreenId: refinedScreen._id.toString(),
+      stitchProjectId: refinedScreen.stitchProjectId,
+      screenId: refinedScreen.screenId,
+      htmlUrl: refinedScreen.htmlUrl,
+      imageUrl: refinedScreen.imageUrl,
+      durationMs: Date.now() - startedAt,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Design refined successfully",
+      projectId,
+      feedback: trimmedMessage,
+      editInstruction,
+      htmlUrl: refinedScreen.htmlUrl,
+      imageUrl: refinedScreen.imageUrl,
+      currentScreen: refinedScreen,
+      status: project.status,
+    });
+  } catch (error) {
+    console.error("[submitFeedback] Refinement failed", {
+      projectId,
+      stage,
+      durationMs: Date.now() - startedAt,
+      errorName: error.name,
+      errorCode: error.code,
+      errorMessage: error.message,
+      stack: error.stack,
+    });
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
   }
 };

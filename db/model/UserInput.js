@@ -75,7 +75,7 @@ const inputSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Validator must be added AFTER the schema is created and BEFORE the model.
+
 inputSchema.path("industryFields").validate(function (fields) {
   if (!fields) return true;
 
@@ -86,7 +86,7 @@ inputSchema.path("industryFields").validate(function (fields) {
 
   for (const [key, value] of Object.entries(fields)) {
     const def = defs.get(key);
-    if (!def) return false; // unknown field for this industry
+    if (!def) return false; 
 
     if (def.type === "select" && value && !def.options?.includes(value)) {
       return false;

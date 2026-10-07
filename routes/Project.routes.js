@@ -6,6 +6,7 @@ import {
   generateBrief,
   generateSite,
   getProjectResults,
+  submitFeedback,
 } from "../controllers/ProjectController.js";
 
 
@@ -19,6 +20,7 @@ ProjectRouter.get("/:projectId/get-project",getProject)
 ProjectRouter.post("/:projectId/generate-brief",generateBrief)
 ProjectRouter.post("/:projectId/generate",generateSite)
 ProjectRouter.get("/:projectId/results",getProjectResults)
+ProjectRouter.post("/:projectId/feedback",submitFeedback)
 
 
 export default ProjectRouter;

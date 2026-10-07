@@ -5,7 +5,7 @@ import { ContactSchema } from "./UserContact.js";
 const ARCHETYPE_IDS = Object.keys(archetypesconfig.archetypes);
 const HEX_COLOR = /^#([0-9A-Fa-f]{6})$/;
 
-// Keep in sync with MIN_SECTIONS / MAX_SECTIONS in briefGenerationService.js
+
 const MIN_SECTIONS = 3;
 const MAX_SECTIONS = 12;
 const MAX_TONES = 5;
@@ -191,14 +191,6 @@ const designBriefSchema = new mongoose.Schema(
         maxlength: 300,
       },
     },
-
-    /*
-     * Actual business contact data.
-     * This comes from UserInput, not from AI.
-     *
-     * This allows later stages (compiler/Stitch)
-     * to use the real address, phone, email, etc.
-     */
     contact: {
       type: ContactSchema,
       default: () => ({}),
@@ -209,8 +201,6 @@ const designBriefSchema = new mongoose.Schema(
   trim: true,
   default: undefined,
 },
-
-    // Set by backend from real input data, never by AI.
     contentReadiness: {
       hasLogo: {
         type: Boolean,

@@ -3,7 +3,7 @@ import { PATTERN_LIBRARY } from "../config/Patternlibrary.js";
 export function resolvePatternForSection(section) {
   const normalizedSection = (section ?? "").toLowerCase().trim();
 
-  // Exact match
+ 
   for (const [id, pattern] of Object.entries(PATTERN_LIBRARY)) {
     if (pattern.match?.exact?.includes(normalizedSection)) {
       return {
@@ -13,8 +13,6 @@ export function resolvePatternForSection(section) {
       };
     }
   }
-
-  // Keyword match
   let bestId = null;
   let bestScore = 0;
 
@@ -41,8 +39,6 @@ export function resolvePatternForSection(section) {
       score: bestScore,
     };
   }
-
-  // Guaranteed fallback
   return {
     id: "generic-section",
     pattern: PATTERN_LIBRARY["generic-section"],
